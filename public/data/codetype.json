@@ -1,0 +1,22 @@
+[
+  {"typeid":"1","typename":"音乐"},
+  {"typeid":"2","typename":"PC"},
+  {"typeid":"3","typename":"动漫"},
+  {"typeid":"4","typename":"DDO"},
+  {"typeid":"5","typename":"视频"},
+  {"typeid":"6","typename":"翼支付"},
+  {"typeid":"7","typename":"联通强联网"},
+  {"typeid":"8","typename":"普通移动"},
+  {"typeid":"9","typename":"短信类型"},
+  {"typeid":"10","typename":"RDO"},
+  {"typeid":"11","typename":"普通联通"},
+  {"typeid":"12","typename":"IVR"},
+  {"typeid":"13","typename":"短信指令RDO"},
+  {"typeid":"14","typename":"MM"},
+  {"typeid":"15","typename":"安卓单机"},
+  {"typeid":"16","typename":"强联"},
+  {"typeid":"17","typename":"普通电信"},
+  {"typeid":"18","typename":"积分"},
+  {"typeid":"19","typename":"微信"},
+  {"typeid":"20","typename":"小额支付"}
+]

@@ -1,0 +1,10 @@
+﻿[
+	{"id":1, "text":"代码管理", "children":
+	[{"id":11, "name":"CodeSort", "text":"代码分类管理"},{"id":12, "name":"CodeType", "text":"代码类型管理"}]},
+	{"id":2, "text":"数据管理", "children":
+	[
+		{"id":21, "text":"移动", "children":
+		[{"id":211,"text":"音乐","children":
+		[{"id":2111,"name":"100","text":"100-xxxx"}]}]},{"id":22, "name":"CodeType", "text":"代码类型管理"}]}
+
+]

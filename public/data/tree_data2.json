@@ -1,0 +1,114 @@
+﻿[
+  {
+    "id": 1,
+    "text": "代码管理",
+    "children": [
+      {
+        "id": 11,
+        "name": "CodeSort",
+        "text": "代码分类管理"
+      },
+      {
+        "id": 12,
+        "name": "CodeType",
+        "text": "代码类型管理"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "text": "数据管理",
+    "children": [
+      {
+        "text": "移动",
+        "id": 21,
+        "children": [
+          {
+            "text": "音乐",
+            "id": 211,
+            "children": [
+              {
+                "text": "100-宜搜音乐",
+                "id": 2111,
+                "name": "CodeInfo/100"
+              }
+            ]
+          },
+          {
+            "text": "普通移动",
+            "id": 212,
+            "children": [
+              {
+                "text": "101-211平台代码（联网）",
+                "id": 2121,
+                "name": "CodeInfo/101"
+              },
+              {
+                "text": "102-联动优势",
+                "id": 2122,
+                "name": "CodeInfo/102"
+              },
+              {
+                "text": "124-全真api",
+                "id": 2123,
+                "name": "CodeInfo/124"
+              }
+            ]
+          },
+          {
+            "text": "动漫",
+            "id": 213,
+            "children": [
+              {
+                "text": "103-点之行动漫",
+                "id": 2131,
+                "name": "CodeInfo/103"
+              },
+              {
+                "text": "104-宜搜动漫",
+                "id": 2132,
+                "name": "CodeInfo/104"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "电信",
+        "id": 22,
+        "children": [
+          {
+            "text": "翼支付",
+            "id": 221,
+            "children": [
+              {
+                "text": "158-创宏视讯",
+                "id": 2211,
+                "name": "CodeInfo/158"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "联通",
+        "id": 23,
+        "children": [
+          {
+            "text": "联通强联网",
+            "id": 231,
+            "children": [
+              {
+                "text": "302-东硕联通",
+                "id": 2311,
+                "name": "CodeInfo/302"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },{"id":3, "text":"渠道管理", "children":[{"id":31,"text":"渠道配置","name":"123"}
+  ]
+  }
+]
