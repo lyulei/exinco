@@ -92,7 +92,7 @@ class IndexController extends Controller
         foreach($rs as $key => $value){
             $result[$value->parentname][$value->type_name][] = array("id"=>$value->code_num,"name"=>$value->code_name);
         }
-        $url = 'http://'.$_SERVER['HTTP_HOST'];
+        //$url = 'http://'.$_SERVER['HTTP_HOST'];
         $beginstr = '[{"id":1, "text":"代码管理", "children":[{"id":11, "name":"CodeSort", "text":"代码分类管理"},{"id":12, "name":"CodeType", "text":"代码类型管理"}]},{"id":2, "text":"数据管理", "children":[{';
         $str = '';
         $num = 1;
@@ -138,7 +138,7 @@ class IndexController extends Controller
          * 新增管理渠道内容的tree
          */
         $str = substr($str,0,strlen($str)-2).']}]';
-        $str .= '},{"id":3, "text":"渠道管理", "children":[{"id":31,"text":"渠道配置管理","name":"Channel"}]';
+        $str .= '},{"id":3, "text":"渠道管理", "children":[{"id":31,"text":"渠道配置管理","name":"Channel"},{"id":4,"text":"数据管理","children":[{"id":41,"text":"数据管理","name":"Data"}]}]';
 
         $tree = $beginstr.$str."}]";
 

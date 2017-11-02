@@ -18,6 +18,54 @@ class InitController extends Controller
      */
     public function index()
     {
+
+        /**
+         * 易讯无限MDO配置
+         * op（易讯分配的接口名称）
+         * pid（易讯分配产品ID 不用体现）
+         * ppid（易讯分配计费点ID 不用体现）
+         * sitid（奕信分配的代码ID）
+         */
+        $PID_CONF[100] = '1234';//数字100代表渠道编号，后面的4位数字为易讯分配的PID
+        $URL_CONF['getcmd'] = 'http://101.200.191.80:50080/api/getcmd';//易讯请求计费接口
+        $URL_CONF['vcode'] = 'http://101.200.191.80:50080/api/vcode';//验证码提交接口
+        $ppid = '123456';//易讯分配计费点ID
+        $param = '?';
+        $keystr = '';
+        $valuestr = '';
+
+        if (!empty($input = Input::all())) {
+            if (!empty($input['op'])) {
+                foreach ($input as $key => $value) {
+                    if ($key == 'op') {
+                        $url = $URL_CONF[$value];
+                    } elseif ($key == 'sitid') {
+                        $param .= 'pid=' . $PID_CONF[$value] . '&';
+                    } else {
+                        $param .= $key . '=' . $value . '&';
+                    }
+                }
+
+                $curl = curl_init(); // 启动一个CURL会话
+                curl_setopt($curl, CURLOPT_URL, $url . $param);
+                curl_setopt($curl, CURLOPT_HEADER, false);
+                curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+                curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //不验证证书
+                curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false); //不验证证书
+                curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
+                $result = curl_exec($curl);
+                curl_close($curl);//关闭URL请求
+            } else {
+                $result = '{"statemsg":"miss parameters!","state":"998"}';
+            }
+        } else {
+            $result = '{"statemsg":"miss parameters!","state":"999"}';
+        }
+        return $result;
+/*
+        dd($URL_CONF[$input['op']]);
+
         $url = 'http://ivas.iizhifu.com/init.php?';
         $param = '';
         $siteid = 123;//由上家提供
@@ -27,17 +75,17 @@ class InitController extends Controller
         if (!empty($input = Input::all())) {
             //dd(1);
             foreach ($input as $key => $value) {
-                if($key == 'siteid'){
+                if ($key == 'siteid') {
                     $channelid = $value;
                 } else {
                     $param .= $key . '=' . $value . '&';
-                    $keystr .= '`'.$key.'`,';
-                    $valuestr .= '"'.$value.'",';
+                    $keystr .= '`' . $key . '`,';
+                    $valuestr .= '"' . $value . '",';
                 }
             }
-            $param .= 'siteid='.$siteid;
+            $param .= 'siteid=' . $siteid;
             $keystr .= '`siteid`,`channelid`';
-            $valuestr .= '"'.$siteid.'","'.$channelid.'"';
+            $valuestr .= '"' . $siteid . '","' . $channelid . '"';
             //dd($param);
             //dd(date('Y-m-d H:i:s', time()));
 
@@ -58,14 +106,14 @@ class InitController extends Controller
             $result = curl_exec($curl);
             curl_close($curl);//关闭URL请求
 
-            if($result){
+            if ($result) {
                 $arr = json_decode($result);
                 //dd($arr);
                 $hRet = $arr->hRet;
-                $sqlstr = 'INSERT INTO `exinco_requests` ('.$keystr.',`hRet`,`ptime`) VALUES ('.$valuestr.',"'.$hRet.'","'.time().'")';
+                $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`hRet`,`ptime`) VALUES (' . $valuestr . ',"' . $hRet . '","' . time() . '")';
                 //dd($sqlstr);
             } else {
-                $sqlstr = 'INSERT INTO `exinco_requests` ('.$keystr.',`hRet`,`ptime`) VALUES ('.$valuestr.',"206","'.time().'")';
+                $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`hRet`,`ptime`) VALUES (' . $valuestr . ',"206","' . time() . '")';
             }
             $rs = DB::insert($sqlstr);
         } else {
@@ -73,6 +121,7 @@ class InitController extends Controller
         }
         //dd($res)
         return $result;
+        */
     }
 
     /**
