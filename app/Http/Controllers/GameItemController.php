@@ -127,12 +127,12 @@ class GameItemController extends Controller
             case "deleted":
                 foreach($arr as $key => $value){
                     foreach($value as $key_1 => $value_1){
-                        if($key_1 == 'code_num'){
-                            $code_num = $value_1;
+                        if($key_1 == 'id'){
+                            $id = $value_1;
                         }
                     }
                 }
-                $sqlstr = 'update `exinco_code_type` set `del`="1" where (`code_num`='.$code_num.')';
+                $sqlstr = 'update `exinco_game_item` set `del`="1" where (`id`='.$id.')';
 
                 $result = DB::update($sqlstr);
                 if($result){

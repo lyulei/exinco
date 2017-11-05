@@ -216,9 +216,11 @@ class IndexController extends Controller
             foreach ($rs as $key => $value) {
                 foreach($value as $key_1 => $value_1){
                     if($key_1 == 'param'){
-                        foreach (json_decode($value_1) as $k=>$v){
-                            foreach ($v as $k1 => $v2){
-                                $arr[$k1] = urlencode($v2);
+                        if($value_1){
+                            foreach (json_decode($value_1) as $k=>$v){
+                                foreach ($v as $k1 => $v2){
+                                    $arr[$k1] = urlencode($v2);
+                                }
                             }
                         }
                     } else {
@@ -233,7 +235,7 @@ class IndexController extends Controller
         } else {
             $data = '{"total":0,"rows":[{"id":"","code_num":"'.$id.'","game_name":"","status":""}]}';
         }
-        //dd($data);
+
         return $data;
     }
 

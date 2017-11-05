@@ -86,7 +86,7 @@ class CodeTypeController extends Controller
                             if($key_1 == 'dis')
                                 $value_1 = $display[$value_1];
 
-                            if($key_1 == 'code_num'){
+                            if($key_1 == 'id'){
                                 $id = $value_1;
                             } else {
                                 $keystr .='`'.$key_1.'`="'.$value_1.'",';
@@ -94,10 +94,38 @@ class CodeTypeController extends Controller
                         }
                     }
                 }
-                $keystr = substr($keystr,0,strlen($keystr)-1);
-                $sqlstr = 'update `exinco_code_type` set '.$keystr.' where (`code_num`='.$id.')';
+                if($id){
+                    $keystr = substr($keystr,0,strlen($keystr)-1);
+                    $sqlstr = 'update `exinco_code_type` set '.$keystr.' where (`id`='.$id.')';
+                    $result = DB::update($sqlstr);
+                } else {
+                    $keystr = '';
+                    $valuestr = '';
+                    foreach($arr as $k => $v){
+                        foreach($v as $k_1 => $v_1){
+                            if($k_1 == 'dis'){
+                                if($v_1 == 'Yes'){
+                                    $v_1 = 1;
+                                } else {
+                                    $v_1 = 0;
+                                }
+                            }
+                            if($k_1 != 'id' and $k_1 !='type_name'){
+                                $keystr .= '`'.$k_1.'`,';
+                                $valuestr .='"'.$v_1.'",';
+                            }
+                        }
+                    }
+                    $keystr = substr($keystr,0,strlen($keystr)-1);
+                    $valuestr = substr($valuestr,0,strlen($valuestr)-1);
+                    $sqlstr = 'insert into `exinco_code_type` ('.$keystr.') values ('.$valuestr.')';
 
-                $result = DB::update($sqlstr);
+                    $result = DB::insert($sqlstr);
+                }
+                //$keystr = substr($keystr,0,strlen($keystr)-1);
+                //$sqlstr = 'update `exinco_code_type` set '.$keystr.' where (`code_num`='.$id.')';
+
+                //$result = DB::update($sqlstr);
                 if($result){
                     $data = [
                         'status' => 1,

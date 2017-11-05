@@ -92,13 +92,14 @@ class CodeInfoController extends Controller
                 break;
             case "updated":
                 //dd($arr);
+                $param_temp = '';
                 foreach($arr as $key => $value){
                     foreach($value as $key_1 => $value_1){
                         if ($key_1 == "id"){
                             $id = $value_1;
                         }
                         if($key_1 != "id" and $key_1 != "game_name" and $key_1 != "code_num" and $key_1 != "status" and $key_1 != "del"){
-                            $arr_temp[] = array($key_1=>$value_1);
+                            $param_temp[] = array($key_1=>$value_1);
                         } elseif ($key_1 == 'status'){
                             if($value_1 == 'Yes'){$value_1 = 1;}else{$value_1 = 0;}
                             $keystr .='`'.$key_1.'`="'.$value_1.'",';
@@ -107,20 +108,25 @@ class CodeInfoController extends Controller
                         }
                     }
                 }
-                $arr_temp = addslashes(urldecode(json_encode($arr_temp)));
+
                 if ($id) {
+                    if($param_temp){
+                        $arr_temp = addslashes(urldecode(json_encode($param_temp)));
+                    } else {
+                        $arr_temp = '';
+                    }
                     $keystr = $keystr.'`param`="'.$arr_temp.'"';
                     $sqlstr = 'update `exinco_game_info` set '.$keystr.' where (`id`='.$id.')';
                     $result = DB::update($sqlstr);
                 } else {
                     $keystr = '';
                     $valuestr = '';
-                    $arr_temp = '';
+                    $param_temp = '';
                     foreach($arr as $key => $value){
                         foreach($value as $key_1 => $value_1){
                             //dd($key_1);
                             if($key_1 != 'id' and $key_1 != 'game_name' and $key_1 != 'status' and $key_1 !='code_num'){
-                                $arr_temp[] = array($key_1=>urlencode($value_1));
+                                $param_temp[] = array($key_1=>urlencode($value_1));
                             } elseif($key_1 == 'status') {
                                 if($value_1 == 'Yes'){$value_1 = 1;}else{$value_1 = 0;}
 
@@ -135,7 +141,12 @@ class CodeInfoController extends Controller
                             }
                         }
                     }
-                    $arr_temp = addslashes(urldecode(json_encode($arr_temp)));
+
+                    if($param_temp){
+                        $arr_temp = addslashes(urldecode(json_encode($param_temp)));
+                    } else {
+                        $arr_temp ='';
+                    }
                     $keystr = $keystr.'`param`';
                     $valuestr = $valuestr.'"'.$arr_temp.'"';
                     $sqlstr = 'insert into `exinco_game_info` ('.$keystr.') values ('.$valuestr.')';
@@ -198,8 +209,9 @@ class CodeInfoController extends Controller
     {
         //------------ 游戏信息表头 ------------
         $results["columns"] = '{field:"id",title:"游戏编号"},{field:"game_name",title:"游戏名称",editor:"textbox"},';
-        //dd($id);
+
         $rs = DB::select('select `field_name`,`param_remarks` from `exinco_game_item` where `code_num` = '.$id.' and `param_type`=1 and `del`=0');
+
         if ($rs){
             foreach ($rs as $key => $value){
                 $results["columns"] .= '{field:"'.$value->field_name.'",title:"'.$value->param_remarks.'",editor:"textbox"},';

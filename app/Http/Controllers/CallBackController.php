@@ -8,6 +8,7 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Log;
 
 class CallBackController extends Controller
 {
@@ -16,8 +17,15 @@ class CallBackController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(){
+        $input = Input::all();
+        Log::info($input);
+    }
+
+    public function indexbak()
     {
+
+
         $param = '?';
         $keystr = '';
         $valuestr = '';

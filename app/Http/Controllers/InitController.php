@@ -25,27 +25,52 @@ class InitController extends Controller
          * pid（易讯分配产品ID 不用体现）
          * ppid（易讯分配计费点ID 不用体现）
          * sitid（奕信分配的代码ID）
+         * Init?op=getcmd&sitid=100&pid=1111
          */
-        $PID_CONF[100] = '1234';//数字100代表渠道编号，后面的4位数字为易讯分配的PID
         $URL_CONF['getcmd'] = 'http://101.200.191.80:50080/api/getcmd';//易讯请求计费接口
         $URL_CONF['vcode'] = 'http://101.200.191.80:50080/api/vcode';//验证码提交接口
-        $ppid = '123456';//易讯分配计费点ID
+
         $param = '?';
         $keystr = '';
         $valuestr = '';
 
         if (!empty($input = Input::all())) {
+            //dd($input);
             if (!empty($input['op'])) {
                 foreach ($input as $key => $value) {
                     if ($key == 'op') {
                         $url = $URL_CONF[$value];
-                    } elseif ($key == 'sitid') {
-                        $param .= 'pid=' . $PID_CONF[$value] . '&';
+                    } elseif ($key == 'cid') { //即channel id
+                        $keystr .= '`' . $key . '` ,';
+                        $valuestr .= "'" . $value . "' ,";
+                    } elseif ($key == 'itemnum') {
+                        $item_num = $value;//即item num
+                        // 根据item num获取pid
+                        $param_json = DB::table('exinco_item_info')->where('item_num', $item_num)->where('status', 1)->where('del', 0)->pluck('param');
+                        // 处理param中的json 并获取pid
+                        if ($param_json) {
+                            $param_array = json_decode($param_json, true);
+                            foreach ($param_array as $v) {
+                                $pid = $v['pid'];
+                            };
+                            $param .= 'pid=' . $pid . '&';
+                            $keystr .= '`itemnum` ,';
+                            $valuestr .= "'" . $value . "' ,";
+                        } else {
+                            $result = '{"statemsg":"miss parameters!","state":"996"}';// 道具编号不存在
+                            //return $result;
+                        }
                     } else {
                         $param .= $key . '=' . $value . '&';
+                        $keystr .= '`' . $key . '` ,';
+                        $valuestr .= "'" . $value . "' ,";
                     }
                 }
 
+                //              $keystr = substr($keystr,0,strlen($keystr)-1);
+                //               $valuestr = substr($valuestr,0,strlen($valuestr)-1);
+//dd($url . $param);
+                /* 暂时关闭*/
                 $curl = curl_init(); // 启动一个CURL会话
                 curl_setopt($curl, CURLOPT_URL, $url . $param);
                 curl_setopt($curl, CURLOPT_HEADER, false);
@@ -56,72 +81,105 @@ class InitController extends Controller
                 curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
                 $result = curl_exec($curl);
                 curl_close($curl);//关闭URL请求
-            } else {
-                $result = '{"statemsg":"miss parameters!","state":"998"}';
-            }
-        } else {
-            $result = '{"statemsg":"miss parameters!","state":"999"}';
-        }
-        return $result;
-/*
-        dd($URL_CONF[$input['op']]);
 
-        $url = 'http://ivas.iizhifu.com/init.php?';
-        $param = '';
-        $siteid = 123;//由上家提供
-        $keystr = '';
-        $valuestr = '';
 
-        if (!empty($input = Input::all())) {
-            //dd(1);
-            foreach ($input as $key => $value) {
-                if ($key == 'siteid') {
-                    $channelid = $value;
+                //$result = '{"cmd":[{"dat":"YX,256936,25,12f4,1829245,636001,2105cos35QPFVJY0A","dest":"10658077696636","encoding":"plain","role":"l","delay":"0","type":"sms"}],"psmg":"35QPFVJY0A","state":"0","pid":"10EM","psid":"20171105152055678010740573128117"}';
+                $data = json_decode($result, true);
+                if ($data['state'] == 0) {
+                    $rs['state'] = $data['state'];
+                    $rs['psid'] = $data['psid'];
+                    $rs['psmg'] = $data['psmg'];
+                    $rs['cmd'] = $data['cmd'];
+
+                    $keystr .= '`state` ,`psid`';
+                    $valuestr .= "'" . $rs['state'] . "' ,'" . $rs['psid'] . "'";
+
+                    //dd($keystr . $valuestr);
                 } else {
-                    $param .= $key . '=' . $value . '&';
-                    $keystr .= '`' . $key . '`,';
-                    $valuestr .= '"' . $value . '",';
+                    $data = json_decode($result, true);
+
+                    $rs['statemsg'] = $data['statemsg'];
+                    $rs['state'] = $data['state'];
+
+                    $keystr .= '`state`';
+                    $valuestr .= "'" . $rs['state'] . "'";
+                    //dd($data['state']);
+
+                    //return $result;
                 }
-            }
-            $param .= 'siteid=' . $siteid;
-            $keystr .= '`siteid`,`channelid`';
-            $valuestr .= '"' . $siteid . '","' . $channelid . '"';
-            //dd($param);
-            //dd(date('Y-m-d H:i:s', time()));
-
-            //$param = substr($param, 0, strlen($param) - 1);
-
-            $url = $url . $param;
-            $curl = curl_init(); // 启动一个CURL会话
-            curl_setopt($curl, CURLOPT_URL, $url);
-            curl_setopt($curl, CURLOPT_HEADER, false);
-            curl_setopt($curl, CURLOPT_TIMEOUT, 30);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //不验证证书
-            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false); //不验证证书
-            //curl_setopt($curl, CURLOPT_HTTPHEADER,array('Content-Type: application/json'));
-            //curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // 跳过证书检查
-            //curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, true);  // 从证书中检查SSL加密算法是否存在
-            curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
-            $result = curl_exec($curl);
-            curl_close($curl);//关闭URL请求
-
-            if ($result) {
-                $arr = json_decode($result);
-                //dd($arr);
-                $hRet = $arr->hRet;
-                $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`hRet`,`ptime`) VALUES (' . $valuestr . ',"' . $hRet . '","' . time() . '")';
-                //dd($sqlstr);
+                $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ') VALUES (' . $valuestr . ')';
+                $insert = DB::insert($sqlstr);
+                if ($insert) {
+                    $result = json_encode($rs);
+                } else {
+                    $result = '{"statemsg":"miss parameters!","state":"997"}';// 插入数据库失败
+                }
             } else {
-                $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`hRet`,`ptime`) VALUES (' . $valuestr . ',"206","' . time() . '")';
+                $result = '{"statemsg":"miss parameters!","state":"998"}';//无计费请求参数，非易讯代码
             }
-            $rs = DB::insert($sqlstr);
         } else {
-            $result = '{"hRet":"-9998"}';
+            $result = '{"statemsg":"miss parameters!","state":"999"}';//无任何请求信息
         }
-        //dd($res)
         return $result;
-        */
+        /*
+                dd($URL_CONF[$input['op']]);
+
+                $url = 'http://ivas.iizhifu.com/init.php?';
+                $param = '';
+                $siteid = 123;//由上家提供
+                $keystr = '';
+                $valuestr = '';
+
+                if (!empty($input = Input::all())) {
+                    //dd(1);
+                    foreach ($input as $key => $value) {
+                        if ($key == 'siteid') {
+                            $channelid = $value;
+                        } else {
+                            $param .= $key . '=' . $value . '&';
+                            $keystr .= '`' . $key . '`,';
+                            $valuestr .= '"' . $value . '",';
+                        }
+                    }
+                    $param .= 'siteid=' . $siteid;
+                    $keystr .= '`siteid`,`channelid`';
+                    $valuestr .= '"' . $siteid . '","' . $channelid . '"';
+                    //dd($param);
+                    //dd(date('Y-m-d H:i:s', time()));
+
+                    //$param = substr($param, 0, strlen($param) - 1);
+
+                    $url = $url . $param;
+                    $curl = curl_init(); // 启动一个CURL会话
+                    curl_setopt($curl, CURLOPT_URL, $url);
+                    curl_setopt($curl, CURLOPT_HEADER, false);
+                    curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+                    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //不验证证书
+                    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false); //不验证证书
+                    //curl_setopt($curl, CURLOPT_HTTPHEADER,array('Content-Type: application/json'));
+                    //curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // 跳过证书检查
+                    //curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, true);  // 从证书中检查SSL加密算法是否存在
+                    curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
+                    $result = curl_exec($curl);
+                    curl_close($curl);//关闭URL请求
+
+                    if ($result) {
+                        $arr = json_decode($result);
+                        //dd($arr);
+                        $hRet = $arr->hRet;
+                        $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`hRet`,`ptime`) VALUES (' . $valuestr . ',"' . $hRet . '","' . time() . '")';
+                        //dd($sqlstr);
+                    } else {
+                        $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`hRet`,`ptime`) VALUES (' . $valuestr . ',"206","' . time() . '")';
+                    }
+                    $rs = DB::insert($sqlstr);
+                } else {
+                    $result = '{"hRet":"-9998"}';
+                }
+                //dd($res)
+                return $result;
+                */
     }
 
     /**
