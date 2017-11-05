@@ -58,7 +58,7 @@ class InitController extends Controller
                             $valuestr .= "'" . $value . "' ,";
                         } else {
                             $result = '{"statemsg":"miss parameters!","state":"996"}';// 道具编号不存在
-                            //return $result;
+                            return $result;
                         }
                     } else {
                         $param .= $key . '=' . $value . '&';
@@ -82,6 +82,9 @@ class InitController extends Controller
                 $result = curl_exec($curl);
                 curl_close($curl);//关闭URL请求
 
+                //发起计费请求的时间
+                list($t1, $t2) = explode(' ', microtime());
+                $ptime = sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);//整型，格式：1509894548868
 
                 //$result = '{"cmd":[{"dat":"YX,256936,25,12f4,1829245,636001,2105cos35QPFVJY0A","dest":"10658077696636","encoding":"plain","role":"l","delay":"0","type":"sms"}],"psmg":"35QPFVJY0A","state":"0","pid":"10EM","psid":"20171105152055678010740573128117"}';
                 $data = json_decode($result, true);
@@ -91,8 +94,8 @@ class InitController extends Controller
                     $rs['psmg'] = $data['psmg'];
                     $rs['cmd'] = $data['cmd'];
 
-                    $keystr .= '`state` ,`psid`';
-                    $valuestr .= "'" . $rs['state'] . "' ,'" . $rs['psid'] . "'";
+                    $keystr .= '`state` ,`psid` ,`ptime`';
+                    $valuestr .= "'" . $rs['state'] . "' ,'" . $rs['psid'] . "' ,'".$ptime."'";
 
                     //dd($keystr . $valuestr);
                 } else {
@@ -101,24 +104,27 @@ class InitController extends Controller
                     $rs['statemsg'] = $data['statemsg'];
                     $rs['state'] = $data['state'];
 
-                    $keystr .= '`state`';
-                    $valuestr .= "'" . $rs['state'] . "'";
+                    $keystr .= '`state` ,`ptime`';
+                    $valuestr .= "'" . $rs['state'] . "','".$ptime."'";
                     //dd($data['state']);
-
                     //return $result;
                 }
                 $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ') VALUES (' . $valuestr . ')';
+                //dd($sqlstr);
                 $insert = DB::insert($sqlstr);
                 if ($insert) {
                     $result = json_encode($rs);
                 } else {
                     $result = '{"statemsg":"miss parameters!","state":"997"}';// 插入数据库失败
+                    return $result;
                 }
             } else {
                 $result = '{"statemsg":"miss parameters!","state":"998"}';//无计费请求参数，非易讯代码
+                return $result;
             }
         } else {
             $result = '{"statemsg":"miss parameters!","state":"999"}';//无任何请求信息
+            return $result;
         }
         return $result;
         /*
