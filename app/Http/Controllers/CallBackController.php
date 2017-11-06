@@ -23,7 +23,7 @@ class CallBackController extends Controller
         $a = 1;
         $b = 1;
         for($i=1;$i<=10000;$i++){
-            $rid = $this->rate(20); //根据概率获取奖项id
+            $rid = $this->rate(0); //根据概率获取奖项id,如num=0则不扣量全部转发
             if($rid){
                 $r_result['转发'] = $a++;
             } else {
@@ -32,8 +32,9 @@ class CallBackController extends Controller
         }
         dd($r_result);
         */
-        if (!empty($input = Input::all()) and !empty($mtid = $input['mtid'])) {
 
+        if (!empty($input = Input::all()) and !empty($mtid = $input['mtid'])) {
+            Log::info('接收到的MR状态报告参数：'.json_encode($input));
             foreach ($input as $k => $v) {
                 $input_tmp[$k] = urlencode($v);
             }
@@ -41,7 +42,7 @@ class CallBackController extends Controller
             $mr_json = json_encode($input_tmp);
             $mr = urldecode(json_encode($mr_json));
 
-            $rs = DB::select('SELECT * from exinco_requests where psid=' . $mtid);
+            $rs = DB::select('SELECT * from exinco_requests where psid="' . $mtid.'"');
 
             if ($rs) {
                 foreach ($rs as $key => $value) {
@@ -50,7 +51,7 @@ class CallBackController extends Controller
                     $itemnum = $value->itemnum; // 道具编号
                     $status = $value->status; //计费请求结果 1成功 0未更新状态
                 }
-                //dd($itemnum);
+                //dd($rs);
                 if ($status == 0) {
                     //获取渠道数据
                     $c_rs = DB::table('exinco_channel')->where('status', '1')->where('del', '0')->where('channel_id', $cid)->get();
@@ -59,8 +60,8 @@ class CallBackController extends Controller
                         foreach ($c_rs as $key_1 => $value_1) {
                             $mr_url = $value_1->mr;
                         }
-                        //num：扣量概率，如20则代表扣20%的量，rid = 0 则不转发 rid = 1 则转发，补充：实际上num应该是根据渠道id获取到的
-                        $rid = $this->rate(20);
+                        //num：扣量概率，如20则代表扣20%的量，如num=0则不扣量全部转发。rid = 0 则不转发 rid = 1 则转发，补充：实际上num应该是根据渠道id获取到的
+                        $rid = $this->rate(0);
                         if ($rid) {
                             $param = '?';
                             foreach ($input as $k => $v) {
@@ -82,14 +83,18 @@ class CallBackController extends Controller
                             $s_result = curl_exec($curl);
                             curl_close($curl);//关闭URL请求
 
-                            if ($s_result == 'success') {
+                            //if ($s_result == 'success') {
+                            if ($s_result == 'ok') {
                                 $send = 1;
                                 //当前时间转13位毫秒级时间戳
                                 list($t1, $t2) = explode(' ', microtime());
                                 $stime = sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);//整型，格式：1509894548868
+                                Log::info('转发MR状态报告参数：['.$s_result.']'.$param.'|send='.$send.'stime='.$stime);
                             } else {
+                                $s_result = 'fail';
                                 $send = 0;
                                 $stime = NULL;
+                                Log::info('转发MR状态报告参数：['.$s_result.']'.$param.'|send='.$send.'stime='.$stime);
                             }
                         } else {
                             $send = 0;
@@ -102,30 +107,18 @@ class CallBackController extends Controller
 
                     $sqlstr = 'update `exinco_requests` set `status`="' . $input['status'] . '",`fee`="' . $input['fee'] . '",`city`="' . $input['city'] . '",`province`="' . $input['province'] . '",`mr` =' . $mr . ',`time`="' . $input['time'] . '",`send`="'.$send.'",`stime`="'.$stime.'" where `id`=' . $id;
                     $result = DB::update($sqlstr);
-
+                    Log::info('update sql：' . $sqlstr.', result：'.$result);
                 } else {
-                    $logstr = '';
-                    foreach ($input as $k => $v) {
-                        $logstr .= $k . ':' . $v . '|';
-                    }
-
-                    Log::info('MR返回的mtid已更新状态：|' . $logstr);
+                    Log::info('MR返回的mtid已更新状态：|' . json_encode($input));
                     return '{"statemsg":"miss parameters!","state":"993"}';//MR返回的mtid已更新状态
                 }
             } else {
-                $logstr = '';
-                foreach ($input as $k => $v) {
-                    $logstr .= $k . ':' . $v . '|';
-                }
-
-                Log::info('MR返回的mtid不存在：|' . $logstr);
+                Log::info('MR返回的mtid不存在：|' . json_encode($input));
                 return '{"statemsg":"miss parameters!","state":"994"}';//MR返回的mtid不存在
             }
         } else {
             return '{"statemsg":"miss parameters!","state":"995"}';//参数不正确，非易讯MDO代码MR请求，如接入新代码可在此位置进行调整
         }
-
-        //Log::info($input);
     }
 
     public function indexbak()
@@ -307,30 +300,35 @@ class CallBackController extends Controller
 
     public function rate($num)
     {
-        $m_num = 100 - $num;
-        $prize_arr = array(
-            '0' => array('id' => 0, 'zf' => 'false', 'v' => $num),
-            '1' => array('id' => 1, 'zf' => 'true', 'v' => $m_num),
-        );
+        if ($num) {
+            $m_num = 100 - $num;
+            $prize_arr = array(
+                '0' => array('id' => 0, 'zf' => 'false', 'v' => $num),
+                '1' => array('id' => 1, 'zf' => 'true', 'v' => $m_num),
+            );
 
-        foreach ($prize_arr as $key => $val) {
-            $arr[$val['id']] = $val['v'];
-        }
-
-        $result = '';
-        //概率数组的总概率精度
-        $proSum = array_sum($arr);
-        //概率数组循环
-        foreach ($arr as $key => $proCur) {
-            $randNum = mt_rand(1, $proSum);
-            if ($randNum <= $proCur) {
-                $result = $key;
-                break;
-            } else {
-                $proSum -= $proCur;
+            foreach ($prize_arr as $key => $val) {
+                $arr[$val['id']] = $val['v'];
             }
+
+            $result = '';
+            //概率数组的总概率精度
+            $proSum = array_sum($arr);
+            //概率数组循环
+            foreach ($arr as $key => $proCur) {
+                $randNum = mt_rand(1, $proSum);
+                if ($randNum <= $proCur) {
+                    $result = $key;
+                    break;
+                } else {
+                    $proSum -= $proCur;
+                }
+            }
+            unset ($arr);
+        } else {
+            $result = 1;
         }
-        unset ($arr);
+
         return $result;
     }
 }

@@ -35,6 +35,7 @@ class InitController extends Controller
         $valuestr = '';
 
         if (!empty($input = Input::all())) {
+            Log::info('接收到的计费报告参数：'.json_encode($input));
             //dd($input);
             if (!empty($input['op'])) {
                 foreach ($input as $key => $value) {
@@ -67,9 +68,6 @@ class InitController extends Controller
                     }
                 }
 
-                //              $keystr = substr($keystr,0,strlen($keystr)-1);
-                //               $valuestr = substr($valuestr,0,strlen($valuestr)-1);
-//dd($url . $param);
                 /* 暂时关闭*/
                 $curl = curl_init(); // 启动一个CURL会话
                 curl_setopt($curl, CURLOPT_URL, $url . $param);

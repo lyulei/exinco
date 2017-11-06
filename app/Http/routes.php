@@ -22,6 +22,7 @@ Route::any('loginverify', 'LoginController@loginverify');
  */
 Route::any('Init', 'InitController@index');
 Route::any('CallBack', 'CallBackController@index');
+Route::any('Resend', 'ResendController@index');
 
 /**
  * 登录中间件设置
