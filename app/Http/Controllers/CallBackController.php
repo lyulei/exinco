@@ -66,9 +66,9 @@ class CallBackController extends Controller
                             $param = '?';
                             foreach ($input as $k => $v) {
                                 if ($k == 'sid' or $k == 'pid' or $k == 'ppid') {
-                                    $param .= 'cid='.$cid.'&itemnum='.$itemnum.'&';
+                                    //$param .= '';
                                 } else {
-                                    $param .= $k .'=' .$v.'&';
+                                    $param .= 'cid='.$cid.'&itemnum='.$itemnum.'&'.$k .'=' .$v.'&';
                                 }
                             }
                             //dd($param);
