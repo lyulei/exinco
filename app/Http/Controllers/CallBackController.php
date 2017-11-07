@@ -68,7 +68,7 @@ class CallBackController extends Controller
                                 if ($k == 'sid' or $k == 'pid' or $k == 'ppid') {
                                     //$param .= '';
                                 } else {
-                                    $param .= 'cid='.$cid.'&itemnum='.$itemnum.'&'.$k .'=' .$v.'&';
+                                    $param .= 'cid='.urlencode($cid).'&itemnum='.urlencode($itemnum).'&'.$k .'=' .urlencode($v).'&';
                                 }
                             }
                             //dd($param);
