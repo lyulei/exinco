@@ -155,7 +155,7 @@ class CallBackController extends Controller
                             }
                             //dd($input);
                             //dd($param);
-                            /*$curl = curl_init(); // 启动一个CURL会话
+                            $curl = curl_init(); // 启动一个CURL会话
                             curl_setopt($curl, CURLOPT_URL, $mr_url.$param);
                             curl_setopt($curl, CURLOPT_HEADER, false);
                             curl_setopt($curl, CURLOPT_TIMEOUT, 30);
@@ -164,8 +164,8 @@ class CallBackController extends Controller
                             curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false); //不验证证书
                             curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
                             $s_result = curl_exec($curl);
-                            curl_close($curl);//关闭URL请求*/
-                            $s_result = 'ok';
+                            curl_close($curl);//关闭URL请求
+                            //$s_result = 'ok';
 
                             if ($s_result == 'ok') {
                                 $send = 1;
