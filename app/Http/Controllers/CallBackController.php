@@ -33,8 +33,10 @@ class CallBackController extends Controller
         dd($r_result);
         */
 
-        if (!empty($input = Input::all()) and !empty($mtid = $input['mtid'])) {
-            Log::info('接收到的MR状态报告参数：'.json_encode($input));
+        $input = Input::all();
+
+        Log::info('接收到的MR状态报告参数：'.json_encode($input));
+        if (!empty($input) and !empty($mtid = @$input['mtid'])) {
             foreach ($input as $k => $v) {
                 $input_tmp[$k] = urlencode($v);
             }
@@ -117,7 +119,86 @@ class CallBackController extends Controller
                 return '{"statemsg":"miss parameters!","state":"994"}';//MR返回的mtid不存在
             }
         } else {
-            return '{"statemsg":"miss parameters!","state":"995"}';//参数不正确，非易讯MDO代码MR请求，如接入新代码可在此位置进行调整
+            foreach ($input as $k => $v) {
+                $input_tmp[$k] = urlencode($v);
+            }
+            //将MR请求数据转为json格式并准备存入数据库
+            $mr_json = json_encode($input_tmp);
+            $mr = urldecode(json_encode($mr_json));
+
+            //dd($mr);
+            //$rs = DB::select('SELECT * from exinco_requests where psid="' . $mtid.'"');
+            $rs = DB::table('exinco_requests')->where('psid',$input['CPParam'])->get();
+
+            if ($rs){
+                foreach ($rs as $key => $value) {
+                    $id = $value->id; //计费请求id
+                    $cid = $value->cid; //渠道id
+                    $itemnum = $value->itemnum; // 道具编号
+                    $status = $value->status; //计费请求结果 1成功 0未更新状态
+                }
+                //dd($status);
+                if ($status == 0) {
+                    //获取渠道数据
+                    $mr_url = DB::table('exinco_channel')->where('status', '1')->where('del', '0')->where('channel_id', $cid)->pluck('mr');
+                    if($mr_url){
+                        //num：扣量概率，如20则代表扣20%的量，如num=0则不扣量全部转发。rid = 0 则不转发 rid = 1 则转发，补充：实际上num应该是根据渠道id获取到的
+                        $rid = $this->rate(0);
+                        if ($rid) {
+                            $param = '?cid='.urlencode($cid).'&itemnum='.urlencode($itemnum).'&';
+                            foreach ($input as $k => $v) {
+                                if ($k <> 'codeid' and $k <> 'siteid' and $k <> 'mobile'){
+                                    $param .= $k .'=' .urlencode($v).'&';
+                                } elseif ($k == 'mobile'){
+                                    $param .= 'num=' .urlencode($v).'&';
+                                }
+                            }
+                            //dd($input);
+                            //dd($param);
+                            /*$curl = curl_init(); // 启动一个CURL会话
+                            curl_setopt($curl, CURLOPT_URL, $mr_url.$param);
+                            curl_setopt($curl, CURLOPT_HEADER, false);
+                            curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+                            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //不验证证书
+                            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false); //不验证证书
+                            curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
+                            $s_result = curl_exec($curl);
+                            curl_close($curl);//关闭URL请求*/
+                            $s_result = 'ok';
+
+                            if ($s_result == 'ok') {
+                                $send = 1;
+                                //当前时间转13位毫秒级时间戳
+                                list($t1, $t2) = explode(' ', microtime());
+                                $stime = sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);//整型，格式：1509894548868
+                                Log::info('转发MR状态报告参数：['.$s_result.']'.$param.'|send='.$send.'stime='.$stime);
+                            } else {
+                                $s_result = 'fail';
+                                $send = 0;
+                                $stime = NULL;
+                                Log::info('转发MR状态报告参数：['.$s_result.']'.$param.'|send='.$send.'stime='.$stime);
+                            }
+                        } else {
+                            $send = 0;
+                            $stime = NULL;
+                        }
+                    } else {
+                        // 渠道的MR URL为空或不存在
+                        $send = 0;
+                        $stime = NULL;
+                    }
+                    $sqlstr = 'update `exinco_requests` set `status`="' . $input['stat'] . '",`mr` =' . $mr . ',`send`="'.$send.'",`stime`="'.$stime.'" where `id`=' . $id;
+                    //dd($sqlstr);
+                    $result = DB::update($sqlstr);
+                    Log::info('update sql：' . $sqlstr.', result：'.$result);
+                } else {
+                    Log::info('MR返回的CPParam已更新状态：|' . json_encode($input));
+                    return '{"statemsg":"miss parameters!","state":"993"}';//MR返回的mtid已更新状态
+                }
+            }
+
+            //return '{"statemsg":"miss parameters!","state":"995"}';//参数不正确，非易讯MDO代码MR请求，如接入新代码可在此位置进行调整
         }
     }
 
@@ -330,5 +411,10 @@ class CallBackController extends Controller
         }
 
         return $result;
+    }
+
+    public function get($str){
+        $val = !empty($_GET[$str]) ? $_GET[$str] : null;
+        return $val;
     }
 }

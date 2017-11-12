@@ -118,6 +118,70 @@ class InitController extends Controller
                     return $result;
                 }
             } else {
+                // SP欣夕信
+                $url = 'http://ivas.iizhifu.com/init.php';
+                $keystr .= '';
+                $valuestr .= '';
+
+                foreach ($input as $key => $value) {
+                    if ($key == 'serial') {
+                        $param .= $key . '=' . $value . '&';
+                        $keystr .= '`psid`,';
+                        $valuestr .= '"' . $value . '",';
+                    } elseif ($key == 'itemnum'){
+                        $itemnum = $value;
+                        $keystr .= '`' . $key . '`,';
+                        $valuestr .= '"' . $value . '",';
+                    } elseif($key == 'ib'){
+                        $param .= $key . '=' . $value . '&';
+                    } elseif($key == 'cid'){
+                        $keystr .= '`' . $key . '`,';
+                        $valuestr .= '"' . $value . '",';
+                    } else {
+                        $param .= $key . '=' . $value . '&';
+                        $keystr .= '`' . $key . '`,';
+                        $valuestr .= '"' . $value . '",';
+                    }
+                }
+                $keystr = substr($keystr, 0, strlen($keystr) - 1);
+                $valuestr = substr($valuestr, 0, strlen($valuestr) - 1);
+                $true_param = $this->getParam($itemnum);
+
+                if($true_param){
+                    //dd($url.$param.$true_param);
+                    //dd($keystr.$valuestr);
+                    $curl = curl_init(); // 启动一个CURL会话
+                    curl_setopt($curl, CURLOPT_URL, $url.$param.$true_param);
+                    curl_setopt($curl, CURLOPT_HEADER, false);
+                    curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+                    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //不验证证书
+                    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false); //不验证证书
+                    curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
+                    $result = curl_exec($curl);
+                    curl_close($curl);//关闭URL请求
+
+                    //$result = '{"Login":{"sms":"YX,260637,23,0091,1822051,01,23117jd22e","num":" 1065842232","type":"data"},"hRet":"0"}';
+                    if ($result) {
+                        $arr = json_decode($result);
+                        //dd($arr);
+                        //当前时间转13位毫秒级时间戳
+                        list($t1, $t2) = explode(' ', microtime());
+                        $microtime = sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);//整型，格式：1509894548868
+                        $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`state`,`ptime`) VALUES (' . $valuestr . ',"' . $arr->hRet . '","' . $microtime . '")';
+                        //dd($sqlstr);
+                        $rs = DB::insert($sqlstr);
+
+                        return $result;
+                    } else {
+                        $result = '{"statemsg":"miss parameters!","state":"994"}';//计费请求返回数据异常
+                        return $result;
+                    }
+                } else {
+                    $result = '{"statemsg":"miss parameters!","state":"995"}';//参数错误
+                    return $result;
+                }
+
                 $result = '{"statemsg":"miss parameters!","state":"998"}';//无计费请求参数，非易讯代码
                 return $result;
             }
@@ -126,65 +190,6 @@ class InitController extends Controller
             return $result;
         }
         return $result;
-        /*
-                dd($URL_CONF[$input['op']]);
-
-                $url = 'http://ivas.iizhifu.com/init.php?';
-                $param = '';
-                $siteid = 123;//由上家提供
-                $keystr = '';
-                $valuestr = '';
-
-                if (!empty($input = Input::all())) {
-                    //dd(1);
-                    foreach ($input as $key => $value) {
-                        if ($key == 'siteid') {
-                            $channelid = $value;
-                        } else {
-                            $param .= $key . '=' . $value . '&';
-                            $keystr .= '`' . $key . '`,';
-                            $valuestr .= '"' . $value . '",';
-                        }
-                    }
-                    $param .= 'siteid=' . $siteid;
-                    $keystr .= '`siteid`,`channelid`';
-                    $valuestr .= '"' . $siteid . '","' . $channelid . '"';
-                    //dd($param);
-                    //dd(date('Y-m-d H:i:s', time()));
-
-                    //$param = substr($param, 0, strlen($param) - 1);
-
-                    $url = $url . $param;
-                    $curl = curl_init(); // 启动一个CURL会话
-                    curl_setopt($curl, CURLOPT_URL, $url);
-                    curl_setopt($curl, CURLOPT_HEADER, false);
-                    curl_setopt($curl, CURLOPT_TIMEOUT, 30);
-                    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //不验证证书
-                    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false); //不验证证书
-                    //curl_setopt($curl, CURLOPT_HTTPHEADER,array('Content-Type: application/json'));
-                    //curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // 跳过证书检查
-                    //curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, true);  // 从证书中检查SSL加密算法是否存在
-                    curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
-                    $result = curl_exec($curl);
-                    curl_close($curl);//关闭URL请求
-
-                    if ($result) {
-                        $arr = json_decode($result);
-                        //dd($arr);
-                        $hRet = $arr->hRet;
-                        $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`hRet`,`ptime`) VALUES (' . $valuestr . ',"' . $hRet . '","' . time() . '")';
-                        //dd($sqlstr);
-                    } else {
-                        $sqlstr = 'INSERT INTO `exinco_requests` (' . $keystr . ',`hRet`,`ptime`) VALUES (' . $valuestr . ',"206","' . time() . '")';
-                    }
-                    $rs = DB::insert($sqlstr);
-                } else {
-                    $result = '{"hRet":"-9998"}';
-                }
-                //dd($res)
-                return $result;
-                */
     }
 
     /**
@@ -251,5 +256,47 @@ class InitController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function getParam($itemnum){
+        $str = '';
+        $rs = DB::select('select `game_num`,`param` from `exinco_item_info` where `item_num`='.$itemnum);
+
+        if($rs){
+            foreach ($rs as $value){
+                $game_num = $value->game_num;
+                $param_arr = json_decode($value->param);
+            }
+
+            foreach ($param_arr as $v){
+                $str .= 'codeid='.$v->sms_code.'&';
+            }
+            $rs = DB::table('exinco_game_info')->select('code_num','param')->where('id',$game_num)->get();
+            //dd($rs);
+            if ($rs){
+                foreach ($rs as $value){
+                    $code_num = $value->code_num;
+                    $param_arr = json_decode($value->param);
+                }
+                foreach($param_arr as $k => $v){
+                    foreach ($v as $kk => $vv){
+                        $param_remarks = DB::table('exinco_game_item')
+                            ->where('code_num',$code_num)
+                            ->where('field_name',$kk)->pluck('param_remarks');
+                        if ($param_remarks){
+                            $str .= $param_remarks.'='.$vv.'&';
+                        } else {
+                            return false;
+                        }
+                    }
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        return $str;
     }
 }
