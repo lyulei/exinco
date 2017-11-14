@@ -172,6 +172,12 @@ class InitController extends Controller
                         //dd($sqlstr);
                         $rs = DB::insert($sqlstr);
 
+                        if ($rs){
+
+                        } else {
+                            Log::info('[INSERT FAIL]SQL:'.$sqlstr);
+                        }
+
                         return $result;
                     } else {
                         $result = '{"statemsg":"miss parameters!","state":"994"}';//计费请求返回数据异常
