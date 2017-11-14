@@ -36,7 +36,7 @@ class CallBackController extends Controller
         $input = Input::all();
 
         Log::info('接收到的MR状态报告参数：'.json_encode($input));
-        if (!empty($input) and !empty($mtid = @$input['mtid'])) {
+        if (!empty($input) and !empty($mtid = @$input['mtid'])) { //@表示不进行错误提示
             foreach ($input as $k => $v) {
                 $input_tmp[$k] = urlencode($v);
             }
@@ -63,7 +63,7 @@ class CallBackController extends Controller
                             $mr_url = $value_1->mr;
                         }
                         //num：扣量概率，如20则代表扣20%的量，如num=0则不扣量全部转发。rid = 0 则不转发 rid = 1 则转发，补充：实际上num应该是根据渠道id获取到的
-                        $rid = $this->rate(0);
+                        $rid = $this->rate(10);
                         if ($rid) {
                             $param = '?';
                             foreach ($input as $k => $v) {
@@ -147,14 +147,16 @@ class CallBackController extends Controller
                         if ($rid) {
                             $param = '?cid='.urlencode($cid).'&itemnum='.urlencode($itemnum).'&';
                             foreach ($input as $k => $v) {
-                                if ($k <> 'codeid' and $k <> 'siteid' and $k <> 'mobile'){
+                                if ($k <> 'codeid' and $k <> 'siteid' and $k <> 'mobile' and $k <> 'type' and $k <> 'stat'){
                                     $param .= $k .'=' .urlencode($v).'&';
                                 } elseif ($k == 'mobile'){
                                     $param .= 'num=' .urlencode($v).'&';
+                                } elseif ($k == 'stat'){
+                                    $param .= 'status=' .urlencode($v).'&';
                                 }
                             }
                             //dd($input);
-                            //dd($param);
+                            dd($mr_url.$param);
                             $curl = curl_init(); // 启动一个CURL会话
                             curl_setopt($curl, CURLOPT_URL, $mr_url.$param);
                             curl_setopt($curl, CURLOPT_HEADER, false);
@@ -200,117 +202,6 @@ class CallBackController extends Controller
 
             //return '{"statemsg":"miss parameters!","state":"995"}';//参数不正确，非易讯MDO代码MR请求，如接入新代码可在此位置进行调整
         }
-    }
-
-    public function indexbak()
-    {
-
-
-        $param = '?';
-        $keystr = '';
-        $valuestr = '';
-        $cb = 0;
-        $cb_status = 0;
-
-        if ($input = Input::all()) {
-            foreach ($input as $key => $value) {
-                if ($key == 'CPParam') {
-                    $channelid = substr($value, 0, 3);
-                }
-                if ($key == 'siteid') {
-                    $param .= $key . '=' . $channelid . '&';
-                }
-                $param .= $key . '=' . $value . '&';
-                $keystr .= '`' . $key . '`,';
-                $valuestr .= '"' . $value . '",';
-            }
-            $param = substr($param, 0, strlen($param) - 1);
-        }
-//dd($param);
-        $random[0] = 0;
-        $random[1] = 1;
-        $random[2] = 1;
-        $random[3] = 1;
-        $random[4] = 1;
-        $random[5] = 1;
-        $random[6] = 1;
-        $random[7] = 1;
-        $random[8] = 1;
-        $random[9] = 0;
-        $seed = rand(0, 9);
-
-        if ($r = $random[$seed]) {
-            //dd($random[$seed]);
-            //$rs = DB::select('select mo from exinco_channel ');
-            $url = DB::table('exinco_channel')
-                ->where('channel_id', '=', $channelid)
-                ->where('del', '=', '0')
-                ->pluck('mo');
-            //dd($rs);
-            $url = $url . $param;
-            /**
-             *  回传计费成功数据给渠道 PE生产环境 TE测试环境
-             */
-            /** 测试关闭
-             * $curl = curl_init(); // 启动一个CURL会话
-             * curl_setopt($curl, CURLOPT_URL, $url);
-             * curl_setopt($curl, CURLOPT_HEADER, false);
-             * curl_setopt($curl, CURLOPT_TIMEOUT, 30);
-             * curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-             * curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //不验证证书
-             * curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false); //不验证证书
-             * //curl_setopt($curl, CURLOPT_HTTPHEADER,array('Content-Type: application/json'));
-             * //curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // 跳过证书检查
-             * //curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, true);  // 从证书中检查SSL加密算法是否存在
-             * curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
-             * $result = curl_exec($curl);
-             * curl_close($curl);//关闭URL请求
-             */
-            $result = true;
-            $cb = 1;
-            if ($result) {
-                $cb_status = 1;
-            } else {
-                $cb_status = 0;
-            }
-        }
-
-        $sqlstr = 'insert into `exinco_callbake` (' . $keystr . '`channelid`,`cb`,`cb_status`,`rtime`) values (' . $valuestr . '"' . $channelid . '","' . $cb . '","' . $cb_status . '","' . time() . '")';
-        //dd($sqlstr);
-        $rs = DB::insert($sqlstr);
-
-        if ($rs) {
-            return "ok";
-        }
-
-
-        /*
-        // 概率测试
-        $random[0] = 0;
-        $random[1] = 1;
-        $random[2] = 1;
-        $random[3] = 1;
-        $random[4] = 1;
-        $random[5] = 1;
-        $random[6] = 1;
-        $random[7] = 1;
-        $random[8] = 1;
-        $random[9] = 0;
-
-        $a = 1;
-        $b = 1;
-        $i = 1000;
-        for($i=0;$i<1000;$i++){
-            $seed = rand(0,9);
-            if($random[$seed] == 0){
-                $num['扣量条数'] = $a++;
-            } else {
-                $num['同步条数'] = $b++;
-            }
-        }
-        $num['成功总条数'] = $i;
-        dd($num);
-        */
     }
 
     /**
@@ -411,10 +302,5 @@ class CallBackController extends Controller
         }
 
         return $result;
-    }
-
-    public function get($str){
-        $val = !empty($_GET[$str]) ? $_GET[$str] : null;
-        return $val;
     }
 }
