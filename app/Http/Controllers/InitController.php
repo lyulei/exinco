@@ -165,6 +165,13 @@ class InitController extends Controller
                     if ($result) {
                         $arr = json_decode($result);
                         //dd($arr);
+                        //判定订单号是否存在
+                        $psid = DB::table('exinco_requests')->where('psid',$input['serial'])->count();
+                        if($psid){
+                            $result = '{"statemsg":"oid exists!","state":"993"}';//订单号存在
+                            return $result;
+                        }
+
                         //当前时间转13位毫秒级时间戳
                         list($t1, $t2) = explode(' ', microtime());
                         $microtime = sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);//整型，格式：1509894548868
