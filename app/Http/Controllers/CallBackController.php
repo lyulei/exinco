@@ -33,6 +33,13 @@ class CallBackController extends Controller
         dd($r_result);
         */
 
+        $deduct[100] = 10;//cid 100 深圳欣夕信
+        $deduct[101] = 0;//cid 101 北京萌游
+        $deduct[102] = 0;//cid 102 指动之间
+        $deduct[103] = 0;//cid 103 烁游
+        $deduct[105] = 0;//cid 105 上海燕芮
+
+
         $input = Input::all();
 
         Log::info('接收到的MR状态报告参数：'.json_encode($input));
@@ -63,7 +70,7 @@ class CallBackController extends Controller
                             $mr_url = $value_1->mr;
                         }
                         //num：扣量概率，如20则代表扣20%的量，如num=0则不扣量全部转发。rid = 0 则不转发 rid = 1 则转发，补充：实际上num应该是根据渠道id获取到的
-                        $rid = $this->rate(10);
+                        $rid = $this->rate($deduct[$cid]);
                         if ($rid) {
                             $param = '?';
                             foreach ($input as $k => $v) {
@@ -143,7 +150,7 @@ class CallBackController extends Controller
                     $mr_url = DB::table('exinco_channel')->where('status', '1')->where('del', '0')->where('channel_id', $cid)->pluck('mr');
                     if($mr_url){
                         //num：扣量概率，如20则代表扣20%的量，如num=0则不扣量全部转发。rid = 0 则不转发 rid = 1 则转发，补充：实际上num应该是根据渠道id获取到的
-                        $rid = $this->rate(0);
+                        $rid = $this->rate($deduct[$cid]);
                         if ($rid) {
                             $param = '?cid='.urlencode($cid).'&itemnum='.urlencode($itemnum).'&';
                             foreach ($input as $k => $v) {
