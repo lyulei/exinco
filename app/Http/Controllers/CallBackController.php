@@ -33,7 +33,7 @@ class CallBackController extends Controller
         dd($r_result);
         */
 
-        $deduct[100] = 10;//cid 100 深圳欣夕信
+        $deduct[100] = 15;//cid 100 深圳欣夕信
         $deduct[101] = 0;//cid 101 北京萌游
         $deduct[102] = 0;//cid 102 指动之间
         $deduct[103] = 0;//cid 103 烁游
@@ -163,7 +163,6 @@ class CallBackController extends Controller
                                 }
                             }
                             //dd($input);
-                            dd($mr_url.$param);
                             $curl = curl_init(); // 启动一个CURL会话
                             curl_setopt($curl, CURLOPT_URL, $mr_url.$param);
                             curl_setopt($curl, CURLOPT_HEADER, false);
