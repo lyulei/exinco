@@ -87,64 +87,6 @@ class IndexController extends Controller
         //
     }
 
-    public function gettree(){
-        $rs = DB::select('select * from `exinco_code_type` as a inner join `exinco_code_sort` as b where a.`del`=0 and b.`del`=0 and a.`dis`=1 and a.`code_sort` = b.`id`');
-        foreach($rs as $key => $value){
-            $result[$value->parentname][$value->type_name][] = array("id"=>$value->code_num,"name"=>$value->code_name);
-        }
-        //$url = 'http://'.$_SERVER['HTTP_HOST'];
-        $beginstr = '[{"id":1, "text":"代码管理", "children":[{"id":11, "name":"CodeSort", "text":"代码分类管理"},{"id":12, "name":"CodeType", "text":"代码类型管理"}]},{"id":2, "text":"数据管理", "children":[{';
-        $str = '';
-        $num = 1;
-//dd($result);
-        foreach($result as $kk => $vv){
-            $num1 =1;
-            $key = '2'.$num++;
-            //dd($vv);
-            if($str){
-                $str = substr($str,0,strlen($str)-3).'}]}, {';
-            }
-            $str .= '"text": "'.$kk.'","id": '.$key.',"children": [{';
-
-            foreach ($vv as $kkk => $vvv){
-
-                $num2 =1;
-                $ii = $num1++;
-                $key1 = $key.$ii;
-                $o = count($vvv);
-
-                $str .='"text": "'.$kkk.'","id": '.$key1.',"children": [{';
-                foreach($vvv as $kkkk => $vvvv){
-                    //echo "key->".$kkkk.",value->".$vvvv."<br>";
-                    //echo "key->".$vvv['id'].",value->".$vvv['name']."<br>";
-                    $i = $num2++;
-                    $key2 = $key1.$i;
-                    //echo $i ."=". $o;
-                    if($i == $o){
-                        $str .='"text": "'.$vvvv['id'].'-'.$vvvv['name'].'","id": '.$key2.',"name":"CodeInfo/'.$vvvv['id'].'"}]},{';
-                    } else {
-                        $str .='"text": "'.$vvvv['id'].'-'.$vvvv['name'].'","id": '.$key2.',"name":"CodeInfo/'.$vvvv['id'].'"},{';
-                    }
-                }
-            }
-        }
-        /**
-         *  不包含管理渠道内容的tree
-         */
-        //$str = substr($str,0,strlen($str)-2).']}]';
-
-
-        /**
-         * 新增管理渠道内容的tree
-         */
-        $str = substr($str,0,strlen($str)-2).']}]';
-        $str .= '},{"id":3, "text":"渠道管理", "children":[{"id":31,"text":"渠道配置管理","name":"Channel"},{"id":4,"text":"数据管理","children":[{"id":41,"text":"数据管理","name":"Data"}]}]';
-
-        $tree = $beginstr.$str."}]";
-
-        return $tree;
-    }
-
     public function getcode(){
         $result["total"] = DB::table('exinco_code_type')->where('del','=',0)->count();
 
@@ -317,5 +259,60 @@ class IndexController extends Controller
         //dd($result);
         return $data;
 
+    }
+
+    public function gettree(){
+        $begin = '[';
+        $code = '{"id":1, "text":"代码管理", "children":[{"id":11, "name":"CodeSort", "text":"代码分类管理"},{"id":12, "name":"CodeType", "text":"代码类型管理"}]},';
+        $data = '{"id":2, "text":"数据管理", "children":[{'.$this->gettreestr('CodeInfo').']}]},';
+        $channel = '{"id":3, "text":"渠道管理", "children":[{'.$this->gettreestr('Channel').']},{"id":32,"text":"渠道配置管理","name":"Channel"}]},';
+        $stat = '{"id":4,"text":"数据管理","children":[{"id":41,"text":"数据管理","name":"Stat"}]}';
+        $end = ']';
+
+        return $begin.$code.$data.$channel.$stat.$end;
+    }
+
+    public function gettreestr($param){
+        $rs = DB::select('select * from `exinco_code_type` as a inner join `exinco_code_sort` as b where a.`del`=0 and b.`del`=0 and a.`dis`=1 and a.`code_sort` = b.`id`');
+        foreach($rs as $key => $value){
+            $result[$value->parentname][$value->type_name][] = array("id"=>$value->code_num,"name"=>$value->code_name);
+        }
+        $str = '';
+        $num = 1;
+
+        foreach($result as $kk => $vv){
+            $num1 =1;
+            $key = '2'.$num++;
+
+            if($str){
+                $str = substr($str,0,strlen($str)-3).'}]}, {';
+            }
+            $str .= '"text": "'.$kk.'","id": '.$key.',"children": [{';
+
+            foreach ($vv as $kkk => $vvv){
+                $num2 =1;
+                $ii = $num1++;
+                $key1 = $key.$ii;
+                $o = count($vvv);
+
+                $str .='"text": "'.$kkk.'","id": '.$key1.',"children": [{';
+                foreach($vvv as $kkkk => $vvvv){
+                    $i = $num2++;
+                    $key2 = $key1.$i;
+                    if($i == $o){
+                        $str .='"text": "'.$vvvv['id'].'-'.$vvvv['name'].'","id": '.$key2.',"name":"'.$param.'/'.$vvvv['id'].'"}]},{';
+                    } else {
+                        $str .='"text": "'.$vvvv['id'].'-'.$vvvv['name'].'","id": '.$key2.',"name":"'.$param.'/'.$vvvv['id'].'"},{';
+                    }
+                }
+            }
+        }
+        $str = substr($str,0,strlen($str)-2);
+
+        return $str;
+    }
+
+    public function test(){
+        
     }
 }

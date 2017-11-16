@@ -161,7 +161,9 @@ class ChannelController extends Controller
      */
     public function show($id)
     {
-        //
+        //dd($id);
+
+        return view('channelitem');
     }
 
     /**

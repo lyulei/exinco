@@ -38,6 +38,8 @@ Route::group(['middleware' => ['admin']], function (){
     Route::resource('getcodelimit','IndexController@getcodelimit');
     Route::any('getparamtype','IndexController@getparamtype');
     Route::any('getchannel','IndexController@getchannel');
+    Route::any('getsp','IndexController@getsp');
+    Route::any('test','IndexController@test');
 
     Route::resource('CodeSort','CodeSortController');
     Route::resource('CodeType','CodeTypeController');
@@ -46,6 +48,7 @@ Route::group(['middleware' => ['admin']], function (){
     Route::resource('ItemInfo','ItemInfoController');
     Route::resource('CodeLimit','CodeLimitController');
     Route::resource('Channel','ChannelController');
+    Route::resource('Stat','StatController');
 
 
     Route::any('Logout', 'LoginController@logout');
