@@ -33,7 +33,7 @@ class CallBackController extends Controller
         dd($r_result);
         */
 
-        $deduct[100] = 15;//cid 100 深圳欣夕信
+        $deduct[100] = 20;//cid 100 深圳欣夕信
         $deduct[101] = 0;//cid 101 北京萌游
         $deduct[102] = 0;//cid 102 指动之间
         $deduct[103] = 0;//cid 103 烁游
