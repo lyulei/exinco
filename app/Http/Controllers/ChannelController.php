@@ -161,9 +161,9 @@ class ChannelController extends Controller
      */
     public function show($id)
     {
-        //dd($id);
+        $results['code_num']=$id;
 
-        return view('channelitem');
+        return view('channelitem',['results'=>$results]);
     }
 
     /**

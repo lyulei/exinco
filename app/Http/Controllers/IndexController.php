@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Input;
 
 class IndexController extends Controller
 {
@@ -312,7 +313,153 @@ class IndexController extends Controller
         return $str;
     }
 
+    public function getgame($id){
+        $num = DB::table('exinco_game_info')->where('code_num',$id)->where('status',1)->where('del','=',0)->count();
+
+        if ($num == 0) {
+            $data = '{"total":0,"rows":[{"game_name":"","item_num":"","item_name":""}]}';
+        } else {
+            $arr = DB::table('exinco_game_info')->where('code_num',$id)->where('status',1)->where('del',0)->lists('game_name','id');
+            //dd($arr);
+            foreach ($arr as $key => $value){
+                $itemlists = DB::table('exinco_item_info')->where('game_num',$key)->where('status',1)->where('del',0)->get();
+                foreach ($itemlists as $ikey => $ivalue){
+                    $item[] = array('game_name'=>urlencode($value),'item_num'=>urlencode($ivalue->item_num),'item_name'=>urlencode($ivalue->item_name));
+                }
+            }
+            $result["total"] = count($item);
+            $result["rows"] = $item;
+            $data = urldecode(json_encode($result));
+        }
+        return $data;
+    }
+
+    public function getcp(){
+        $result["total"] = DB::table('exinco_channel')->where('status',1)->where('del','=',0)->count();
+        if ($result["total"] == 0) {
+            $data = '{"total":0,"rows":[{"channel_id":"","channel_name":""}]}';
+        } else {
+            $arr = DB::table('exinco_channel')->where('status',1)->where('del',0)->lists('channel_name','channel_id');
+            foreach($arr as $k => $v){
+                $item[] = array('channel_id'=>$k,'channel_name'=>urlencode($v));
+            }
+            $result["rows"] = $item;
+            $data = urldecode(json_encode($result));
+        }
+        return $data;
+    }
+
+    public function setdeduct($param){
+        $array = explode('-',$param);
+        $item_num = $array[0];
+        $channel_id = $array[1];
+        $result["total"] = DB::table('exinco_deducts')->where('channel_id',$channel_id)->where('item_num',$item_num)->count();
+
+        if ($result["total"] == 0) {
+            $data = '{"total":1,"rows":[{"id":"","channel_id":"'.$channel_id.'","item_num":"'.$item_num.'","deduct":""}]}';
+        } else {
+            $rs = DB::table('exinco_deducts')->where('channel_id',$channel_id)->where('item_num',$item_num)->get();
+            //dd($arr);
+            foreach($rs as $k => $v){
+                foreach ($v as $kk => $vv){
+                    $arr[$kk] = urlencode($vv);
+                }
+                $item[] = $arr;
+            }
+            $result["rows"] = $item;
+            $data = urldecode(json_encode($result));
+        }
+
+        return $data;
+    }
+
+    public function deduct(Request $request){
+        foreach (Input::all() as $key => $value){
+            $op = $key;
+            $pd = $value;
+        }
+        $keystr = '';
+        $valuestr = '';
+        $arr = json_decode($pd);
+        switch ($op) {
+            case "updated":
+                foreach($arr as $key => $value){
+                    foreach($value as $key_1 => $value_1){
+                        if($key_1 == 'id')
+                            $id = $value_1;
+
+                        if($key_1 != 'id' and $key_1 != 'del'){
+                            $keystr .='`'.$key_1.'`="'.$value_1.'",';
+                        }
+                    }
+                }
+                if($id){
+                    $keystr = substr($keystr,0,strlen($keystr)-1);
+                    $sqlstr = 'update `exinco_deducts` set '.$keystr.' where (`id`='.$id.')';
+                    //dd($sqlstr);
+                    $result = DB::update($sqlstr);
+                } else {
+                    $keystr = '';
+                    $valuestr = '';
+                    foreach($arr as $k => $v){
+                        foreach($v as $k_1 => $v_1){
+                            //if($k_1 != 'id' and $k_1 != 'param_name'){
+                            $keystr .= '`'.$k_1.'`,';
+                            $valuestr .='"'.$v_1.'",';
+                            //}
+                        }
+                    }
+                    $keystr = substr($keystr,0,strlen($keystr)-1);
+                    $valuestr = substr($valuestr,0,strlen($valuestr)-1);
+                    $sqlstr = 'insert into `exinco_deducts` ('.$keystr.') values ('.$valuestr.')';
+                    //dd($sqlstr);
+                    $result = DB::insert($sqlstr);
+                }
+
+                if($result){
+                    $data = [
+                        'status' => 1,
+                        'message' => '修改成功！',
+                    ];
+                } else {
+                    $data = [
+                        'status' => 0,
+                        'message' => '修改失败！',
+                    ];
+                }
+                break;
+            case "deleted":
+                foreach($arr as $key => $value){
+                    foreach($value as $key_1 => $value_1){
+                        if($key_1 == 'id'){
+                            $id = $value_1;
+                        }
+                    }
+                }
+                $sqlstr = 'update `exinco_channel` set `del`="1" where (`id`='.$id.')';
+//dd($sqlstr);
+                $result = DB::update($sqlstr);
+                if($result){
+                    $data = [
+                        'status' => 1,
+                        'message' => '删除成功！',
+                    ];
+                } else {
+                    $data = [
+                        'status' => 0,
+                        'message' => '删除失败！',
+                    ];
+                }
+                break;
+            default:
+                echo 3;
+                break;
+        }
+
+        return $data;
+    }
+
     public function test(){
-        
+
     }
 }

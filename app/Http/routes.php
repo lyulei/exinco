@@ -39,6 +39,10 @@ Route::group(['middleware' => ['admin']], function (){
     Route::any('getparamtype','IndexController@getparamtype');
     Route::any('getchannel','IndexController@getchannel');
     Route::any('getsp','IndexController@getsp');
+    Route::resource('getgame','IndexController@getgame');
+    Route::any('getcp','IndexController@getcp');
+    Route::resource('setdeduct','IndexController@setdeduct');
+    Route::resource('deduct','IndexController@deduct');
     Route::any('test','IndexController@test');
 
     Route::resource('CodeSort','CodeSortController');

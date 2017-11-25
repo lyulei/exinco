@@ -122,7 +122,25 @@ class CallBackController extends Controller
                     return '{"statemsg":"miss parameters!","state":"993"}';//MR返回的mtid已更新状态
                 }
             } else {
-                Log::info('MR返回的mtid不存在：|' . json_encode($input));
+                //dd($mr);
+                dd($input);
+                $send= 1;
+                $stime = 1;
+
+                $bool=DB::table("exinco_requests")->insert([
+                    'cid'=>105,
+                    'itemnum'=>1002001,
+                    'psid'=>$mtid,
+                    'status'=>$input['status'],
+                    'fee'=>$input['fee'],
+                    'city'=>$input['city'],
+                    'province'=>$input['province'],
+                    'mr'=>$mr,
+                    'time'=>$input['time'],
+                    'send'=>$send,
+                    'stime'=>$stime
+                ]);
+                //Log::info('MR返回的mtid不存在：|' . json_encode($input));
                 return '{"statemsg":"miss parameters!","state":"994"}';//MR返回的mtid不存在
             }
         } else {
